@@ -1,0 +1,40 @@
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# Frontend / Node
+/frontend/node_modules/
+/frontend/dist/
+/frontend/coverage/
+/tests/node_modules/
+/tests/test-results/
+/tests/playwright-report/
+playwright/.cache/
+
+# Local env & runtime
+.env
+.env.*
+!.env.example
+*.log
+*.guac
+*.cast
+*.mp4
+
+# Tool caches (keep project configs, ignore ephemeral caches/db binaries where appropriate)
+/.serena/cache/
+/.cocoindex_code/cocoindex.db/
+/.cocoindex_code/target_sqlite.db
+/.beads/embeddeddolt/
+/.beads/*.lock
+/.beads/last-touched
+
+# OS
+.DS_Store
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
+*.gate.lock*
