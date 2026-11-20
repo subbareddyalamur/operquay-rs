@@ -1,127 +1,56 @@
-# Agent Instructions
+# Operquay-Rust Agent Instructions
 
-This project uses **bd** (beads) for issue tracking. Run `bd prime` for full workflow context.
+Follow [RULES.md](RULES.md), [tasks.md](tasks.md), and ADRs in [docs/ADR/](docs/ADR/). Build all protocol engines, AWS SSM, multi-database drivers, and UI assets in-process inside the single binary (no sidecar containers).
 
-> **Architecture in one line:** Issues live in a local Dolt database
-> (`.beads/dolt/`); cross-machine sync uses `bd dolt push/pull` (a
-> git-compatible protocol), stored under `refs/dolt/data` on your git
-> remote — separate from `refs/heads/*` where your code lives.
-> `.beads/issues.jsonl` is a passive export, not the wire protocol.
->
-> See [sync-concepts](https://github.com/gastownhall/beads/blob/main/docs/core-concepts/sync-concepts.md)
-> for the one-screen overview and anti-patterns (don't treat JSONL as the
-> source of truth; don't `bd import` during normal operation; don't
-> reach for third-party Dolt hosting before trying the default).
+## Stack
 
-## Quick Reference
+- **Backend**: Rust (`rustc` 1.100+ / edition 2021), Tokio, Axum, `IronRDP 0.17` (`ironrdp-connector`, `ironrdp-tokio`, `ironrdp-session`, `ironrdp-cliprdr`, `ironrdp-displaycontrol`), `rustls`, OpenTelemetry (`opentelemetry` + `tracing-opentelemetry` + Prometheus `/metrics`), multi-database support (`PostgreSQL` RLS, `ClickHouse` HTTP OLAP, `DuckDB` analytical engine, `MySQL`, `Redis`).
+- **Frontend**: React 19, TypeScript 5.8+, Vite 6, Tailwind CSS 3.4, Zod, Zustand, `OperquayTerminal` WASM, Vitest, Playwright + `@axe-core/playwright`.
 
-```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --claim  # Claim work atomically
-bd close <id>         # Complete work
-bd dolt push          # Push beads data to remote
-```
+## Commands
 
-## Non-Interactive Shell Commands
+| Scope | Command |
+| :--- | :--- |
+| Rust format check | `cargo fmt --all -- --check` |
+| Rust strict lint | `cargo clippy --workspace --all-targets -- -D warnings` |
+| Rust tests | `cargo test --workspace` |
+| Frontend typecheck | `pnpm --dir frontend run typecheck` |
+| Frontend lint | `pnpm --dir frontend run lint` |
+| Frontend unit tests | `pnpm --dir frontend run test` |
+| Frontend build | `pnpm --dir frontend run build` |
+| WASM build | `cargo build --release --target wasm32-unknown-unknown -p operquay-term-wasm` |
 
-**ALWAYS use non-interactive flags** with file operations to avoid hanging on confirmation prompts.
+## Structure
 
-Shell commands like `cp`, `mv`, and `rm` may be aliased to include `-i` (interactive) mode on some systems, causing the agent to hang indefinitely waiting for y/n input.
+- `crates/operquay-core`: Domain settings, `SecretString` (`ZeroizeOnDrop`), extensibility traits, SQL schema (`migrations/`).
+- `crates/operquay-telemetry`: OpenTelemetry traces, structured JSON logs, Prometheus `/metrics`.
+- `crates/operquay-guac`: Clean-room Guacamole 1.0–1.5 wire parser/serializer + `SyncTracker`.
+- `crates/operquay-display`: 5-phase `64x64` display planner, `png` + `jpeg-encoder`, binary `OQR2` protocol packetizer.
+- `crates/operquay-rdp`: Pure-Rust in-process `IronRDP 0.17` engine (`ClientConnector`, `ActiveStage`, `CliprdrBackend`, `DisplayControlClient`) + `rustls` TOFU/StrictCA TLS (`Resumption::disabled()`) + 25-LCID keymap + synthetic demo `RdpEngine`.
+- `crates/operquay-vnc`: Cancellation-safe RFB 3.3–3.8 codec + DES `VNCAuth`/`VeNCrypt` + `Raw`/`CopyRect`/`RRE`/`Hextile`/`ZRLE`.
+- `crates/operquay-ssm`: AWS SSM `AgentMessage` SHA-256 codec + WebSocket DataChannel + `HandshakeComplete` barrier + `smux` v1 port forwarding.
+- `crates/operquay-db`: Object-oriented `DatabaseEngineDriver` trait registry (`PostgresDriver`, `ClickHouseDriver`, `DuckDbDriver`, `MySqlDriver`, `RedisDriver`) with read-only SQL guard and parameterized mutations.
+- `crates/operquay-server`: Single-binary Axum control plane, REST/WS endpoints, multi-DB control-plane storage, embedded SPA (`rust-embed`).
+- `frontend/`: React SPA, semantic Dark/Light design tokens (`frontend/src/styles/tokens.css`), `DesktopStage` (`OQR2`) + `GuacamoleClient`, `DatabasesWorkspace`, `KubernetesWorkspace`, `TerminalSession`, `TopologyRoute`, `FleetDashboard`.
 
-**Use these forms instead:**
-```bash
-# Force overwrite without prompting
-cp -f source dest           # NOT: cp source dest
-mv -f source dest           # NOT: mv source dest
-rm -f file                  # NOT: rm file
+## Boundaries
 
-# For recursive operations
-rm -rf directory            # NOT: rm -r directory
-cp -rf source dest          # NOT: cp -r source dest
-```
+### Always
+- Update checkboxes in `tasks.md` strictly after running verification gates.
+- Keep `#![forbid(unsafe_code)]` on all Operquay workspace crates.
+- Keep all UI colors in CSS variables inside `frontend/src/styles/tokens.css`.
+- Redact secrets in logs, traces, URLs, and tests (`ZeroizeOnDrop`).
 
-**Other commands that may prompt:**
-- `scp` - use `-o BatchMode=yes` for non-interactive
-- `ssh` - use `-o BatchMode=yes` to fail instead of prompting
-- `apt-get` - use `-y` flag
-- `brew` - use `HOMEBREW_NO_AUTO_UPDATE=1` env var
+### Ask First
+- Deploying to shared/live environments or modifying external cloud/DB infrastructure.
+- Adding any C/C++ shared library dependency instead of pure Rust.
 
-<!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:1105d646 -->
-## Beads Issue Tracker
+### Never
+- Never add sidecar containers (`guacd`, `guac-lite`, `RDCleanPath` proxy) or push RDP credentials into browser JavaScript/WASM.
+- Never commit secrets, `.env` files, or private keys.
+- Never claim tests or benchmarks passed without running them after the final edit.
 
-This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.
+## Commit Attribution
 
-### Quick Reference
-
-```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --claim  # Claim work
-bd close <id>         # Complete work
-```
-
-### Rules
-
-- Use `bd` for ALL task tracking — do NOT use TodoWrite, TaskCreate, or markdown TODO lists
-- Run `bd prime` for detailed command reference and session close protocol
-- Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
-
-**Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See https://github.com/gastownhall/beads/blob/main/docs/core-concepts/sync-concepts.md for details and anti-patterns.
-
-## Agent Context Profiles
-
-The managed Beads block is task-tracking guidance, not permission to override repository, user, or orchestrator instructions.
-
-- **Conservative (default)**: Use `bd` for task tracking. Do not run git commits, git pushes, or Dolt remote sync unless explicitly asked. At handoff, report changed files, validation, and suggested next commands.
-- **Minimal**: Keep tool instruction files as pointers to `bd prime`; use the same conservative git policy unless active instructions say otherwise.
-- **Team-maintainer**: Only when the repository explicitly opts in, agents may close beads, run quality gates, commit, and push as part of session close. A current "do not commit" or "do not push" instruction still wins.
-
-## Session Completion
-
-This protocol applies when ending a Beads implementation workflow. It is subordinate to explicit user, repository, and orchestrator instructions.
-
-1. **File issues for remaining work** - Create beads for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **Handle git/sync by active profile**:
-   ```bash
-   # Conservative/minimal/default: report status and proposed commands; wait for approval.
-   git status
-
-   # Team-maintainer opt-in only, unless current instructions forbid it:
-   git pull --rebase
-   git push
-   git status
-   ```
-5. **Hand off** - Summarize changes, validation, issue status, and any blocked sync/commit/push step
-
-**Critical rules:**
-- Explicit user or orchestrator instructions override this Beads block.
-- Do not commit or push without clear authority from the active profile or the current user request.
-- If a required sync or push is blocked, stop and report the exact command and error.
-<!-- END BEADS INTEGRATION -->
-
-<!-- BEGIN BEADS CODEX SETUP: generated by bd setup codex -->
-## Beads Issue Tracker
-
-Use Beads (`bd`) for durable task tracking in repositories that include it. Use the `beads` skill at `.agents/skills/beads/SKILL.md` (project install) or `~/.agents/skills/beads/SKILL.md` (global install) for Beads workflow guidance, then use the `bd` CLI for issue operations.
-
-### Quick Reference
-
-```bash
-bd ready                # Find available work
-bd show <id>            # View issue details
-bd update <id> --claim  # Claim work
-bd close <id>           # Complete work
-bd prime                # Refresh Beads context
-```
-
-### Rules
-
-- Use `bd` for all task tracking; do not create markdown TODO lists.
-- Run `bd prime` when Beads context is missing or stale. Codex 0.129.0+ can load Beads context automatically through native hooks; use `/hooks` to inspect or toggle them.
-- Keep persistent project memory in Beads via `bd remember`; do not create ad hoc memory files.
-
-**Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See https://github.com/gastownhall/beads/blob/main/docs/core-concepts/sync-concepts.md for details and anti-patterns.
-<!-- END BEADS CODEX SETUP -->
+AI commits MUST include:
+Co-Authored-By: Antigravity <antigravity@deepmind.google>

@@ -20,6 +20,7 @@ playwright/.cache/
 *.guac
 *.cast
 *.mp4
+/deploy/certs/
 
 # Tool caches (keep project configs, ignore ephemeral caches/db binaries where appropriate)
 /.serena/cache/
@@ -38,3 +39,5 @@ playwright/.cache/
 .beads-credential-key
 .beads/proxieddb/
 *.gate.lock*
+# CocoIndex Code (ccc)
+/.cocoindex_code/

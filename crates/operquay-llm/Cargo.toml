@@ -1,0 +1,21 @@
+[package]
+name = "operquay-llm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+operquay-aws = { path = "../operquay-aws" }
+regex.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+axum.workspace = true
+

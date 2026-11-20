@@ -1,0 +1,29 @@
+project_name: "operquay-rust"
+
+language_servers:
+- rust
+- typescript
+
+encoding: "utf-8"
+
+activation_command:
+activation_command_timeout: 180.0
+line_ending:
+language_backend:
+agent_interface:
+ignore_all_files_in_gitignore: true
+
+ls_specific_settings: {}
+
+ls_workspace_folders:
+- "."
+
+ls_additional_workspace_folders: []
+
+ignored_paths:
+- "target/**"
+- "frontend/node_modules/**"
+- "frontend/dist/**"
+- ".beads/**"
+- ".cocoindex_code/**"
+

@@ -1,0 +1,80 @@
+{
+  "name": "operquay-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.1.0",
+    "@fontsource/jetbrains-mono": "^5.1.0",
+    "@tanstack/react-query": "^5.99.1",
+    "@ui-sdk/core": "0.1.0-beta.1",
+    "@ui-sdk/react": "0.1.0-beta.1",
+    "@xyflow/react": "^12.3.0",
+    "elkjs": "0.12.1",
+    "lucide-react": "^0.460.0",
+    "nanoid": "^5.1.16",
+    "prismjs": "^1.30.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@biomejs/biome": "^1.9.0",
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.49.0",
+    "@testing-library/jest-dom": "^6.6.0",
+    "@testing-library/react": "^16.1.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.72.1",
+    "@typescript-eslint/parser": "^8.72.1",
+    "@vitejs/plugin-react-swc": "^3.7.0",
+    "@vitest/coverage-v8": "^4.1.12",
+    "@vitest/ui": "^4.1.12",
+    "autoprefixer": "^10.6.2",
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^17.5.0",
+    "jsdom": "^25.0.1",
+    "postcss": "^8.5.32",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^6.4.5",
+    "vitest": "^4.1.12"
+  },
+  "engines": {
+    "node": "^20.10.0 || ^22.0.0 || >=24.0.0",
+    "pnpm": ">=9"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "@swc/core",
+      "esbuild"
+    ],
+    "overrides": {
+      "brace-expansion@^1.1.7": "^1.1.20",
+      "form-data@^4.0.0": "^4.0.6",
+      "ws@^8.18.0": "^8.21.0"
+    }
+  }
+}

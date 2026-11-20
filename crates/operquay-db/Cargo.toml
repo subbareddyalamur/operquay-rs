@@ -1,0 +1,29 @@
+[package]
+name = "operquay-db"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+async-trait.workspace = true
+crc32fast.workspace = true
+operquay-core = { path = "../operquay-core" }
+regex.workspace = true
+reqwest.workspace = true
+rustls.workspace = true
+rustls-pki-types.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tokio-postgres.workspace = true
+tokio-rustls.workspace = true
+uuid.workspace = true
+webpki-roots.workspace = true
+
+[dev-dependencies]
+axum.workspace = true
+rcgen = "0.13"
+

@@ -1,0 +1,215 @@
+@import './themes.css';
+
+/* Structure only. Colors live in themes.css. */
+:root {
+  --radius: 6px;
+  --radius-sm: 4px;
+  --radius-lg: 10px;
+  --base-size: 15px;
+  --mono-size: 13px;
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+
+.plat-linux { color: var(--success); }
+.plat-rhel { color: var(--danger); }
+.plat-ubuntu { color: var(--plat-ubuntu); }
+.plat-windows { color: var(--info); }
+.plat-unknown { color: var(--text-dim); }
+
+/* Keep wterm flush inside split/session containers and inherit theme tokens from themes.css. */
+.wterm.wterm {
+  --term-fg: inherit;
+  --term-bg: inherit;
+  --term-cursor: inherit;
+  --term-color-0: inherit;
+  --term-color-1: inherit;
+  --term-color-2: inherit;
+  --term-color-3: inherit;
+  --term-color-4: inherit;
+  --term-color-5: inherit;
+  --term-color-6: inherit;
+  --term-color-7: inherit;
+  --term-color-8: inherit;
+  --term-color-9: inherit;
+  --term-color-10: inherit;
+  --term-color-11: inherit;
+  --term-color-12: inherit;
+  --term-color-13: inherit;
+  --term-color-14: inherit;
+  --term-color-15: inherit;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.wterm.wterm ::selection {
+  background: var(--term-selection-bg);
+}
+
+/* Shared workspace tab bar across main app and Kubernetes workspace */
+.oq-tabbar {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  background: var(--side);
+  border-bottom: 1px solid var(--border);
+}
+
+.oq-tab-list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.oq-tab-list::-webkit-scrollbar {
+  display: none;
+}
+
+.oq-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  max-width: 260px;
+  min-width: 0;
+  flex-shrink: 0;
+  padding: 0 6px 0 10px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-mut);
+  font-size: 13px;
+  line-height: 1.25;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.oq-tab:hover {
+  background: var(--elev);
+  color: var(--text-pri);
+  border-color: var(--border-2);
+}
+
+.oq-tab.active,
+.oq-tab[aria-selected='true'] {
+  background: var(--surface);
+  color: var(--text-pri);
+  border-color: var(--border);
+  font-weight: 500;
+  box-shadow: var(--shadow-sm), inset 0 -2px 0 var(--oq-tab-accent, var(--accent));
+}
+
+.oq-tab.oq-tab-sm {
+  min-height: 26px;
+  max-width: 240px;
+  padding: 0 4px 0 8px;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.oq-tab .oq-tab-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oq-tab-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.oq-tab-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oq-tab .oq-tab-close {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin-left: 2px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: visible;
+  text-overflow: clip;
+  opacity: 0.6;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease, opacity 120ms ease, transform 100ms ease;
+}
+
+.oq-tab:hover .oq-tab-close,
+.oq-tab.active .oq-tab-close,
+.oq-tab[aria-selected='true'] .oq-tab-close,
+.oq-tab:focus-within .oq-tab-close {
+  opacity: 0.85;
+  color: var(--text-mut);
+}
+
+.oq-tab .oq-tab-close:hover,
+.oq-tab .oq-tab-close:focus-visible {
+  opacity: 1;
+  background: color-mix(in srgb, var(--danger) 18%, var(--elev));
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 38%, transparent);
+}
+
+.oq-tab .oq-tab-close:active {
+  transform: scale(0.92);
+}
+
+.oq-tab .oq-tab-confirm {
+  flex-shrink: 0;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--danger) 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  color: var(--danger);
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.oq-tab .oq-tab-confirm:hover {
+  background: color-mix(in srgb, var(--danger) 26%, var(--surface));
+}

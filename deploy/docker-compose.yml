@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    command: ["postgres", "-p", "5454"]
+    environment:
+      POSTGRES_DB: operquay
+      POSTGRES_USER: operquay
+      POSTGRES_PASSWORD: operquay_dev_change_me
+    ports:
+      - "5454:5454"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -p 5454 -U operquay -d operquay"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  operquay:
+    image: localhost/deploy-operquay:latest
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5001:5001"
+      - "5444:5444"
+    environment:
+      HOME: "/home/nonroot"
+      OPERQUAY_LISTEN: "0.0.0.0:5001"
+      OPERQUAY_TLS_LISTEN: "0.0.0.0:5444"
+      OPERQUAY_DATABASE_URL: "postgres://operquay:operquay_dev_change_me@postgres:5454/operquay"
+      OPERQUAY_AWS_ACCESS_MODE: "${OPERQUAY_AWS_ACCESS_MODE:-user}"
+      OPERQUAY_ADMIN_PASSWORD: "${OPERQUAY_ADMIN_PASSWORD:-Password@123}"
+      OPERQUAY_RECORDINGS_DIR: "/app/recordings"
+      OPERQUAY_EXPORTS_DIR: "/app/exports"
+      PUBLIC_URL: "${PUBLIC_URL:-https://localhost:5444}"
+      LOCAL_LOGIN: "${LOCAL_LOGIN:-admin}"
+      TLS_CERT_FILE: "/app/certs/operquay-local-cert.pem"
+      TLS_KEY_FILE: "/app/certs/operquay-local-key.pem"
+      RUST_LOG: "info,operquay=debug"
+    volumes:
+      - ./certs:/app/certs:ro
+      - ${HOME}/.aws:/home/nonroot/.aws:ro
+      - ${HOME}/.kube:/home/nonroot/.kube:ro
+      - operquay_recordings:/app/recordings
+      - operquay_exports:/app/exports
+      - operquay_cache:/app/cache
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:5001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  pgdata:
+  operquay_recordings:
+  operquay_exports:
+  operquay_cache:
+

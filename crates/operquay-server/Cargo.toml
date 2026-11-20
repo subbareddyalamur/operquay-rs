@@ -1,0 +1,65 @@
+[package]
+name = "operquay-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "operquay"
+path = "src/main.rs"
+
+[dependencies]
+async-trait.workspace = true
+axum.workspace = true
+base64.workspace = true
+bytes.workspace = true
+clap.workspace = true
+constant_time_eq.workspace = true
+ed25519-dalek.workspace = true
+futures-util.workspace = true
+hex.workspace = true
+hmac.workspace = true
+http.workspace = true
+mime_guess.workspace = true
+operquay-auth = { path = "../operquay-auth" }
+operquay-aws = { path = "../operquay-aws" }
+operquay-core = { path = "../operquay-core" }
+operquay-db = { path = "../operquay-db" }
+operquay-display = { path = "../operquay-display" }
+operquay-forward = { path = "../operquay-forward" }
+operquay-guac = { path = "../operquay-guac" }
+operquay-k8s = { path = "../operquay-k8s" }
+operquay-license = { path = "../operquay-license" }
+operquay-llm = { path = "../operquay-llm" }
+operquay-rdp = { path = "../operquay-rdp" }
+operquay-recording = { path = "../operquay-recording" }
+operquay-ssm = { path = "../operquay-ssm" }
+operquay-suggest = { path = "../operquay-suggest" }
+operquay-telemetry = { path = "../operquay-telemetry" }
+operquay-vnc = { path = "../operquay-vnc" }
+rcgen = "0.13"
+regex.workspace = true
+reqwest.workspace = true
+ring.workspace = true
+rust-embed.workspace = true
+rustls.workspace = true
+rustls-pki-types.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tokio.workspace = true
+tokio-postgres.workspace = true
+tokio-rustls.workspace = true
+tokio-tungstenite.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+webpki-roots.workspace = true
+zeroize.workspace = true
+
+[dev-dependencies]
+operquay-agent = { path = "../operquay-agent" }

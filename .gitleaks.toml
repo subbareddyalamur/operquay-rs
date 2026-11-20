@@ -1,0 +1,11 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures and build artifacts"
+paths = [
+  '''(^|/)target/''',
+  '''(^|/)node_modules/''',
+  '''(^|/)dist/''',
+]
+

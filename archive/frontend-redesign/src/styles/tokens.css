@@ -1,0 +1,88 @@
+/*
+ * Operquay-Rust Design Token System
+ * RULES.md §5: ZERO raw hex/rgb/hsl colors in any component or feature stylesheet.
+ * Polarity: High-clarity Graphite Dark (#0e1116) & Paper Light (#f5f6f8) with Deep Teal accent.
+ * Contrast: All primary/secondary foregrounds verified >= 4.5:1 against paired surfaces.
+ */
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #0e1116;
+  --side: #12161c;
+  --surface: #161b22;
+  --elev: #1e242d;
+  --surface-hover: #212833;
+  --border: #2c343f;
+  --border-strong: #394454;
+
+  --text-pri: #e6eaf0;
+  --text-mut: #a6b0bd;
+  --text-dim: #8a95a6;
+
+  --accent: #3fb8af;
+  --accent-fg: #05221f;
+  --accent-dim: rgba(63, 184, 175, 0.14);
+  --accent-border: rgba(63, 184, 175, 0.45);
+
+  --success: #7cc77a;
+  --success-dim: rgba(124, 199, 122, 0.14);
+  --warn: #e5b567;
+  --warn-dim: rgba(229, 181, 103, 0.15);
+  --danger: #f08484;
+  --danger-fg: #2b0b0b;
+  --danger-dim: rgba(240, 132, 132, 0.14);
+  --info: #7fb4e8;
+  --info-dim: rgba(127, 180, 232, 0.14);
+
+  --canvas-bg: #080a0d;
+  --overlay: rgba(4, 6, 9, 0.64);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.28);
+  --shadow-elev: 0 18px 40px rgba(0, 0, 0, 0.52);
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #f5f6f8;
+  --side: #edf0f4;
+  --surface: #ffffff;
+  --elev: #e7ebf0;
+  --surface-hover: #dfe5ec;
+  --border: #d0d7e1;
+  --border-strong: #b2bcc9;
+
+  --text-pri: #121721;
+  --text-mut: #3c4758;
+  --text-dim: #4b5563;
+
+  /* High-contrast Deep Teal on light surfaces & tinted badges (verified > 5.5:1 WCAG AA) */
+  --accent: #0b5e57;
+  --accent-fg: #ffffff;
+  --accent-dim: rgba(11, 94, 87, 0.10);
+  --accent-border: rgba(11, 94, 87, 0.36);
+
+  --success: #116631;
+  --success-dim: rgba(17, 102, 49, 0.10);
+  --warn: #854d0e;
+  --warn-dim: rgba(133, 77, 14, 0.10);
+  --danger: #991b1b;
+  --danger-fg: #ffffff;
+  --danger-dim: rgba(153, 27, 27, 0.10);
+  --info: #1e40af;
+  --info-dim: rgba(30, 64, 175, 0.10);
+
+  --canvas-bg: #11161d;
+  --overlay: rgba(15, 23, 42, 0.42);
+  --shadow-sm: 0 1px 4px rgba(15, 23, 42, 0.08);
+  --shadow-elev: 0 14px 32px rgba(15, 23, 42, 0.12);
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}

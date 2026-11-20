@@ -1,0 +1,9 @@
+target/
+frontend/node_modules/
+frontend/playwright-report/
+frontend/test-results/
+.git/
+.beads/
+.serena/
+.cocoindex_code/
+

@@ -1,0 +1,21 @@
+[package]
+name = "operquay-term-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[lints.rust]
+unsafe_code = "allow"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+cast_possible_truncation = "allow"
+cast_sign_loss = "allow"
+
+[dependencies]
+operquay-term = { path = "../operquay-term" }

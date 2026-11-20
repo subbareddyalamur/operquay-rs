@@ -1,0 +1,79 @@
+@import './tokens.css';
+@import './base.css';
+
+@layer ui-sdk;
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Keep dense text legible without changing terminal or SVG sizing. */
+[class~='text-[9px]']:not(svg, svg *), [class~='text-[10px]']:not(svg, svg *),
+[class~='text-[11px]']:not(svg, svg *), [class~='text-[12px]']:not(svg, svg *),
+.text-xs:not(svg, svg *) { font-size: 13px; }
+[class~='text-[13px]']:not(svg, svg *) { font-size: 14px; }
+
+.appearance-options > section + section { margin-top: 1.5rem; }
+
+.formatted-output { background: var(--bg); color: var(--text-pri); font-family: var(--font-mono); }
+.formatted-output .json-key { color: var(--code-key); }
+.formatted-output .json-string { color: var(--code-string); }
+.formatted-output .json-literal { color: var(--code-tag); }
+.formatted-output .json-number { color: var(--code-number); }
+
+@layer utilities {
+  .oq-glass {
+    background: var(--glass-bg);
+    border-color: var(--glass-border);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+}
+
+@keyframes oq-shimmer {
+  0% { opacity: 0.45; }
+  50% { opacity: 0.85; }
+  100% { opacity: 0.45; }
+}
+
+.oq-skeleton {
+  background: var(--surface-hover);
+  animation: oq-shimmer 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oq-skeleton {
+    animation: none;
+    opacity: 0.65;
+  }
+}
+
+[data-slot][hidden]:not([hidden="until-found"]) {
+  display: none !important;
+}
+
+[data-slot="tooltip-content"],
+[data-slot="menu-content"] {
+  transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+
+[data-slot="tooltip-content"][data-starting-style],
+[data-slot="tooltip-content"][data-ending-style],
+[data-slot="menu-content"][data-starting-style],
+[data-slot="menu-content"][data-ending-style] {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+[data-slot="dialog-content"],
+[data-slot="alert-dialog-content"] {
+  transition: opacity var(--duration-normal) var(--ease-out), transform var(--duration-normal) var(--ease-out);
+}
+
+[data-slot="dialog-content"][data-starting-style],
+[data-slot="dialog-content"][data-ending-style],
+[data-slot="alert-dialog-content"][data-starting-style],
+[data-slot="alert-dialog-content"][data-ending-style] {
+  opacity: 0;
+  transform: translateY(4px) scale(0.985);
+}

@@ -1,0 +1,19 @@
+[package]
+name = "operquay-display"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+base64.workspace = true
+bytes.workspace = true
+jpeg-encoder.workspace = true
+operquay-core = { path = "../operquay-core" }
+operquay-guac = { path = "../operquay-guac" }
+png.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+

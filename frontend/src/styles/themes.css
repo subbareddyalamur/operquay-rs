@@ -1,0 +1,208 @@
+/*
+ * Operquay theme overlay — the only file that defines colors.
+ *
+ * Every screen, the Kubernetes workspace and every terminal read these
+ * variables; none of them contain colors of their own. To add a theme:
+ *   1. copy one block below and give it a new data-theme name,
+ *   2. add one entry to THEMES in src/lib/themes.ts.
+ * Nothing else needs to change.
+ */
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Surfaces, from back to front */
+  --bg: #0e1116;
+  --side: #12161c;
+  --surface: #161b22;
+  --elev: #1e242d;
+  --border: #2c343f;
+  --border-2: #222932;
+
+  /* Text */
+  --text-pri: #e6eaf0;
+  --text-mut: #a6b0bd;
+  --text-dim: #8590a0;
+
+  /* Brand: deep teal */
+  --accent: #3fb8af;
+  --accent-fg: #062320;
+  --accent-dim: rgba(63, 184, 175, 0.14);
+  --accent-2: #7fb4e8;
+
+  /* Status (kept distinct from the brand teal) */
+  --success: #7cc77a;
+  --danger: #f08484;
+  --warn: #e5b567;
+  --warn-ink: #2b2416;
+  --info: #7fb4e8;
+  --danger-fg: #2a0d0d;
+
+  /* Elevated interaction & chart tokens */
+  --surface-hover: #1c222d;
+  --border-strong: #323c4e;
+  --plat-ubuntu: #e95420;
+  --env-preset-danger: #f87171;
+  --chart-1: #5bb5a2;
+  --chart-2: #7fb4e8;
+  --chart-3: #e5b567;
+  --chart-4: #a78bfa;
+  --chart-5: #f08484;
+  --chart-6: #7cc77a;
+
+  /* Layers */
+  --overlay: rgba(4, 6, 9, 0.62);
+  --glass-bg: rgba(20, 25, 33, 0.84);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-elev: 0 20px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.05);
+
+  /* Code and YAML */
+  --code-key: #7fb4e8;
+  --code-string: #8fcf8c;
+  --code-number: #e5b567;
+  --code-comment: #8b95a3;
+  --code-tag: #c79be6;
+  --log-lightness: 72%;
+
+  /* Terminal */
+  --term-bg: #0c1017;
+  --term-fg: #eef3f8;
+  --term-cursor: #38bdf8;
+  --term-selection: #264050;
+  --term-match: #6b5520;
+  --term-match-active: #b07d1c;
+  --term-black: #1e293b;
+  --term-red: #f87171;
+  --term-green: #4ade80;
+  --term-yellow: #fbbf24;
+  --term-blue: #60a5fa;
+  --term-magenta: #c084fc;
+  --term-cyan: #22d3ee;
+  --term-white: #dce3ec;
+  --term-bright-black: #64748b;
+  --term-bright-red: #fca5a5;
+  --term-bright-green: #86efac;
+  --term-bright-yellow: #fde68a;
+  --term-bright-blue: #93c5fd;
+  --term-bright-magenta: #d8b4fe;
+  --term-bright-cyan: #67e8f9;
+  --term-bright-white: #f8fafc;
+  --term-color-0: var(--term-black);
+  --term-color-1: var(--term-red);
+  --term-color-2: var(--term-green);
+  --term-color-3: var(--term-yellow);
+  --term-color-4: var(--term-blue);
+  --term-color-5: var(--term-magenta);
+  --term-color-6: var(--term-cyan);
+  --term-color-7: var(--term-white);
+  --term-color-8: var(--term-bright-black);
+  --term-color-9: var(--term-bright-red);
+  --term-color-10: var(--term-bright-green);
+  --term-color-11: var(--term-bright-yellow);
+  --term-color-12: var(--term-bright-blue);
+  --term-color-13: var(--term-bright-magenta);
+  --term-color-14: var(--term-bright-cyan);
+  --term-color-15: var(--term-bright-white);
+  --term-search-match: var(--term-match);
+  --term-search-active: var(--term-match-active);
+  --term-search-border: var(--term-match-active);
+  --term-selection-bg: var(--term-selection);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #f5f6f8;
+  --side: #eef1f4;
+  --surface: #ffffff;
+  --elev: #f0f3f6;
+  --border: #d3d9e0;
+  --border-2: #e3e7ec;
+
+  --text-pri: #18202b;
+  --text-mut: #4a5564;
+  --text-dim: #5f6b7a;
+
+  --accent: #0f7c74;
+  --accent-fg: #ffffff;
+  --accent-dim: rgba(15, 124, 116, 0.1);
+  --accent-2: #2563a8;
+
+  --success: #2f7d32;
+  --danger: #b42318;
+  --warn: #8a5a00;
+  --warn-ink: #fdf3e1;
+  --info: #2563a8;
+  --danger-fg: #ffffff;
+
+  --surface-hover: #eef1f5;
+  --border-strong: #c9d1dc;
+  --plat-ubuntu: #c74115;
+  --env-preset-danger: #dc2626;
+  --chart-1: #0f766e;
+  --chart-2: #2563a8;
+  --chart-3: #b45309;
+  --chart-4: #6d28d9;
+  --chart-5: #b42318;
+  --chart-6: #2f7d32;
+
+  --overlay: rgba(15, 20, 28, 0.38);
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.08);
+  --shadow-elev: 0 20px 48px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.06);
+
+  --code-key: #2563a8;
+  --code-string: #2f7d32;
+  --code-number: #8a5a00;
+  --code-comment: #5f6b7a;
+  --code-tag: #8a3fa0;
+  --log-lightness: 32%;
+
+  --term-bg: #fbfbfc;
+  --term-fg: #1f2733;
+  --term-cursor: #0f7c74;
+  --term-selection: #cfe6e3;
+  --term-match: #f3dfa2;
+  --term-match-active: #e8b84a;
+  --term-black: #1f2733;
+  --term-red: #b42318;
+  --term-green: #2f7d32;
+  --term-yellow: #8a5a00;
+  --term-blue: #2563a8;
+  --term-magenta: #8a3fa0;
+  --term-cyan: #0f7c74;
+  --term-white: #5b6573;
+  --term-bright-black: #6b7380;
+  --term-bright-red: #d0352a;
+  --term-bright-green: #3c8f3f;
+  --term-bright-yellow: #9c6a00;
+  --term-bright-blue: #2f72bf;
+  --term-bright-magenta: #9d50b3;
+  --term-bright-cyan: #128c83;
+  --term-bright-white: #1f2733;
+  --term-color-0: var(--term-black);
+  --term-color-1: var(--term-red);
+  --term-color-2: var(--term-green);
+  --term-color-3: var(--term-yellow);
+  --term-color-4: var(--term-blue);
+  --term-color-5: var(--term-magenta);
+  --term-color-6: var(--term-cyan);
+  --term-color-7: var(--term-white);
+  --term-color-8: var(--term-bright-black);
+  --term-color-9: var(--term-bright-red);
+  --term-color-10: var(--term-bright-green);
+  --term-color-11: var(--term-bright-yellow);
+  --term-color-12: var(--term-bright-blue);
+  --term-color-13: var(--term-bright-magenta);
+  --term-color-14: var(--term-bright-cyan);
+  --term-color-15: var(--term-bright-white);
+  --term-search-match: var(--term-match);
+  --term-search-active: var(--term-match-active);
+  --term-search-border: var(--term-match-active);
+  --term-selection-bg: var(--term-selection);
+}

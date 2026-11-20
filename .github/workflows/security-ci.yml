@@ -1,0 +1,141 @@
+name: Operquay-Rust Security & Supply-Chain CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+  security-events: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust-gates:
+    name: Rust Format, Clippy Pedantic & Workspace Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Verify Zero Unbounded Channels
+        run: |
+          if grep -rn "unbounded_channel" crates/; then
+            echo "ERROR: mpsc::unbounded_channel is forbidden by RULES.md"
+            exit 1
+          fi
+
+      - name: Check Formatting
+        run: cargo fmt --all -- --check
+
+      - name: Clippy Pedantic Gate (-D warnings)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Run Workspace Test Suite
+        run: cargo test --workspace --locked
+
+  frontend-gates:
+    name: Frontend Typecheck, Lint, Test & Wasm Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
+
+      - name: Build operquay-term-wasm
+        run: |
+          cd crates/operquay-term-wasm
+          wasm-pack build --target web --out-dir ../../frontend/src/wasm/pkg
+
+      - name: Frontend Typecheck, Audit, Lint, Test & Build
+        working-directory: frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm audit --audit-level=high
+          pnpm run typecheck
+          pnpm run lint
+          pnpm test
+          pnpm run build
+          test -f dist/operquay_term.wasm
+
+  supply-chain-audit:
+    name: Advisories, Licenses, & Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-audit & cargo-deny
+        run: |
+          cargo install cargo-audit --locked
+          cargo install cargo-deny --locked
+
+      - name: Run cargo-audit (RUSTSEC)
+        run: cargo audit --deny warnings
+
+      - name: Run cargo-deny (advisories, licenses, bans, sources)
+        run: cargo deny check advisories licenses bans sources
+
+      - name: Run Gitleaks Secret Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: "--config=.gitleaks.toml"
+
+  sbom-and-sign:
+    name: CycloneDX SBOM & Sigstore Cosign Attestation
+    needs: [rust-gates, frontend-gates, supply-chain-audit]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install CycloneDX & Sigstore Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Generate CycloneDX SBOM
+        run: |
+          cargo install cargo-cyclonedx --locked
+          cargo cyclonedx --format json --output-cdx
+          mkdir -p artifacts
+          find crates . -maxdepth 3 -name "*.cdx.json" -exec cp {} artifacts/ \;
+
+      - name: Sign SBOM Bundle with Cosign (OIDC on tagged releases)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tar -czf artifacts/operquay-rust-sbom.tar.gz artifacts/*.cdx.json
+          cosign sign-blob --yes \
+            --output-signature artifacts/operquay-rust-sbom.tar.gz.sig \
+            --output-certificate artifacts/operquay-rust-sbom.tar.gz.pem \
+            artifacts/operquay-rust-sbom.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: compliance-sbom-artifacts
+          path: artifacts/
