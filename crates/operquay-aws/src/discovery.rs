@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use quick_xml::events::Event;
+use quick_xml::events::{BytesRef, Event};
 use quick_xml::Reader;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
@@ -1206,6 +1206,24 @@ fn parse_cloudwatch_latest_average(xml: &str) -> Option<f64> {
     best_val
 }
 
+fn append_xml_ref(out: &mut String, r: &BytesRef<'_>) -> Result<(), String> {
+    if let Some(ch) = r
+        .resolve_char_ref()
+        .map_err(|err| format!("XML char ref error: {err}"))?
+    {
+        out.push(ch);
+        return Ok(());
+    }
+    if let Some(s) = quick_xml::escape::resolve_predefined_entity(r.as_ref()) {
+        out.push_str(s);
+        return Ok(());
+    }
+    Err(format!(
+        "unsupported XML entity reference: &{};",
+        r.as_ref()
+    ))
+}
+
 pub fn parse_describe_volumes_xml(xml: &str) -> Vec<serde_json::Value> {
     let mut reader = Reader::from_str(xml);
     let mut stack: Vec<String> = Vec::new();
@@ -1224,7 +1242,7 @@ pub fn parse_describe_volumes_xml(xml: &str) -> Vec<serde_json::Value> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(e)) => {
-                let name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
+                let name = e.name().into_inner().to_owned();
                 let parent = stack.last().map_or("", String::as_str);
                 if name == "item" && parent == "volumeSet" {
                     in_vol = true;
@@ -1241,10 +1259,15 @@ pub fn parse_describe_volumes_xml(xml: &str) -> Vec<serde_json::Value> {
                 cur_text.clear();
             }
             Ok(Event::Text(t)) => {
-                cur_text.push_str(&String::from_utf8_lossy(t.as_ref()));
+                cur_text.push_str(t.xml10_content().as_ref());
+            }
+            Ok(Event::GeneralRef(r)) => {
+                if append_xml_ref(&mut cur_text, &r).is_err() {
+                    break;
+                }
             }
             Ok(Event::End(e)) => {
-                let name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
+                let name = e.name().into_inner();
                 let popped = stack.pop().unwrap_or_default();
                 let parent = stack.last().map_or("", String::as_str);
                 let grand = if stack.len() >= 2 {
@@ -1313,7 +1336,7 @@ pub fn parse_network_interfaces_xml(xml: &str) -> Vec<serde_json::Value> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(e)) => {
-                let name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
+                let name = e.name().into_inner().to_owned();
                 let parent = stack.last().map_or("", String::as_str);
                 if name == "item" && parent == "networkInterfaceSet" {
                     in_eni = true;
@@ -1327,9 +1350,14 @@ pub fn parse_network_interfaces_xml(xml: &str) -> Vec<serde_json::Value> {
                 stack.push(name);
                 cur_text.clear();
             }
-            Ok(Event::Text(t)) => cur_text.push_str(&String::from_utf8_lossy(t.as_ref())),
+            Ok(Event::Text(t)) => cur_text.push_str(t.xml10_content().as_ref()),
+            Ok(Event::GeneralRef(r)) => {
+                if append_xml_ref(&mut cur_text, &r).is_err() {
+                    break;
+                }
+            }
             Ok(Event::End(e)) => {
-                let name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
+                let name = e.name().into_inner();
                 let popped = stack.pop().unwrap_or_default();
                 let parent = stack.last().map_or("", String::as_str);
                 let grand = if stack.len() >= 2 {
@@ -1390,7 +1418,7 @@ pub fn parse_block_device_mappings_xml(xml: &str) -> Vec<(String, String, bool)>
     loop {
         match reader.read_event() {
             Ok(Event::Start(e)) => {
-                let name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
+                let name = e.name().into_inner().to_owned();
                 let parent = stack.last().map_or("", String::as_str);
                 if name == "item" && parent == "blockDeviceMapping" {
                     in_bdm = true;
@@ -1401,9 +1429,14 @@ pub fn parse_block_device_mappings_xml(xml: &str) -> Vec<(String, String, bool)>
                 stack.push(name);
                 cur_text.clear();
             }
-            Ok(Event::Text(t)) => cur_text.push_str(&String::from_utf8_lossy(t.as_ref())),
+            Ok(Event::Text(t)) => cur_text.push_str(t.xml10_content().as_ref()),
+            Ok(Event::GeneralRef(r)) => {
+                if append_xml_ref(&mut cur_text, &r).is_err() {
+                    break;
+                }
+            }
             Ok(Event::End(e)) => {
-                let name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
+                let name = e.name().into_inner();
                 let popped = stack.pop().unwrap_or_default();
                 let parent = stack.last().map_or("", String::as_str);
                 let grand = if stack.len() >= 2 {
@@ -1465,7 +1498,7 @@ pub fn parse_security_groups_xml(xml: &str) -> Vec<serde_json::Value> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(e)) => {
-                let name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
+                let name = e.name().into_inner().to_owned();
                 let parent = stack.last().map_or("", String::as_str);
                 if name == "item" && parent == "securityGroupInfo" {
                     in_sg = true;
@@ -1491,9 +1524,14 @@ pub fn parse_security_groups_xml(xml: &str) -> Vec<serde_json::Value> {
                 stack.push(name);
                 cur_text.clear();
             }
-            Ok(Event::Text(t)) => cur_text.push_str(&String::from_utf8_lossy(t.as_ref())),
+            Ok(Event::Text(t)) => cur_text.push_str(t.xml10_content().as_ref()),
+            Ok(Event::GeneralRef(r)) => {
+                if append_xml_ref(&mut cur_text, &r).is_err() {
+                    break;
+                }
+            }
             Ok(Event::End(e)) => {
-                let name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
+                let name = e.name().into_inner();
                 let popped = stack.pop().unwrap_or_default();
                 let parent = stack.last().map_or("", String::as_str);
                 let grand = if stack.len() >= 2 {
@@ -1613,7 +1651,7 @@ pub fn parse_describe_instances_xml(
     loop {
         match reader.read_event() {
             Ok(Event::Start(e)) => {
-                let name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
+                let name = e.name().into_inner().to_owned();
                 let parent = stack.last().map_or("", String::as_str);
                 if name == "item" && parent == "instancesSet" {
                     cur = Some(Ec2Instance {
@@ -1645,10 +1683,14 @@ pub fn parse_describe_instances_xml(
                 cur_text.clear();
             }
             Ok(Event::Text(t)) => {
-                cur_text.push_str(&String::from_utf8_lossy(t.as_ref()));
+                cur_text.push_str(t.xml10_content().as_ref());
+            }
+            Ok(Event::GeneralRef(r)) => {
+                append_xml_ref(&mut cur_text, &r)
+                    .map_err(|e| format!("EC2 XML parse error: {e}"))?;
             }
             Ok(Event::End(e)) => {
-                let name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
+                let name = e.name().into_inner();
                 let popped = stack.pop().unwrap_or_default();
                 let parent = stack.last().map_or("", String::as_str);
                 let grand = if stack.len() >= 2 {
@@ -1734,7 +1776,7 @@ fn parse_describe_regions_xml(xml: &str) -> Vec<String> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(e)) => {
-                let name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
+                let name = e.name().into_inner().to_owned();
                 if name == "item" {
                     in_item = true;
                     region_name.clear();
@@ -1745,10 +1787,15 @@ fn parse_describe_regions_xml(xml: &str) -> Vec<String> {
                 cur_text.clear();
             }
             Ok(Event::Text(t)) => {
-                cur_text.push_str(&String::from_utf8_lossy(t.as_ref()));
+                cur_text.push_str(t.xml10_content().as_ref());
+            }
+            Ok(Event::GeneralRef(r)) => {
+                if append_xml_ref(&mut cur_text, &r).is_err() {
+                    break;
+                }
             }
             Ok(Event::End(e)) => {
-                let name = String::from_utf8_lossy(e.name().as_ref()).into_owned();
+                let name = e.name().into_inner();
                 if in_item {
                     if name == "item" {
                         if !region_name.is_empty() && opt_in != "not-opted-in" {

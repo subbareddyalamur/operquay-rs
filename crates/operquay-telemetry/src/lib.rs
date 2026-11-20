@@ -13,7 +13,7 @@ use opentelemetry::trace::{TraceContextExt, TracerProvider as _};
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::propagation::TraceContextPropagator;
-use opentelemetry_sdk::trace::{RandomIdGenerator, Sampler, TracerProvider as SdkTracerProvider};
+use opentelemetry_sdk::trace::{RandomIdGenerator, Sampler, SdkTracerProvider};
 use opentelemetry_sdk::{metrics::SdkMeterProvider, Resource};
 use prometheus::{Encoder, Registry, TextEncoder};
 use serde::Serialize;
@@ -85,10 +85,12 @@ impl TelemetryHub {
     ) -> Arc<Self> {
         global::set_text_map_propagator(TraceContextPropagator::new());
 
-        let resource = Resource::new(vec![
-            KeyValue::new("service.name", service_name.to_owned()),
-            KeyValue::new("service.version", env!("CARGO_PKG_VERSION").to_owned()),
-        ]);
+        let resource = Resource::builder()
+            .with_attributes([
+                KeyValue::new("service.name", service_name.to_owned()),
+                KeyValue::new("service.version", env!("CARGO_PKG_VERSION").to_owned()),
+            ])
+            .build();
 
         let sampler = Sampler::ParentBased(Box::new(Sampler::TraceIdRatioBased(
             sample_ratio.clamp(0.0, 1.0),
@@ -106,8 +108,7 @@ impl TelemetryHub {
                 .with_endpoint(endpoint)
                 .build()
             {
-                trace_builder =
-                    trace_builder.with_batch_exporter(exporter, opentelemetry_sdk::runtime::Tokio);
+                trace_builder = trace_builder.with_batch_exporter(exporter);
                 otlp_configured = true;
             }
         }

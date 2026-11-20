@@ -51,22 +51,21 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - name: Install wasm-pack
-        run: cargo install wasm-pack --locked
-
       - name: Build operquay-term-wasm
         run: |
-          cd crates/operquay-term-wasm
-          wasm-pack build --target web --out-dir ../../frontend/src/wasm/pkg
+          cargo build --release --target wasm32-unknown-unknown -p operquay-term-wasm
+          mkdir -p frontend/public
+          cp target/wasm32-unknown-unknown/release/operquay_term_wasm.wasm frontend/public/operquay_term.wasm
 
       - name: Frontend Typecheck, Audit, Lint, Test & Build
         working-directory: frontend
@@ -104,8 +103,7 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          args: "--config=.gitleaks.toml"
+          GITLEAKS_CONFIG: .gitleaks.toml
 
   sbom-and-sign:
     name: CycloneDX SBOM & Sigstore Cosign Attestation
@@ -122,9 +120,10 @@ jobs:
       - name: Generate CycloneDX SBOM
         run: |
           cargo install cargo-cyclonedx --locked
-          cargo cyclonedx --format json --output-cdx
+          cargo cyclonedx --format json
           mkdir -p artifacts
-          find crates . -maxdepth 3 -name "*.cdx.json" -exec cp {} artifacts/ \;
+          find . -maxdepth 3 -path ./artifacts -prune -o -name "*.cdx.json" -type f -exec cp {} artifacts/ \;
+          ls -la artifacts/*.cdx.json
 
       - name: Sign SBOM Bundle with Cosign (OIDC on tagged releases)
         if: startsWith(github.ref, 'refs/tags/v')

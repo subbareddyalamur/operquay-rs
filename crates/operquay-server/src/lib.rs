@@ -57,6 +57,7 @@ use crate::stores::{
 
 #[derive(Embed)]
 #[folder = "../../frontend/dist"]
+#[allow_missing = true]
 struct EmbeddedFrontend;
 
 #[derive(Debug, Clone, Copy)]

@@ -3,8 +3,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine as _;
 use constant_time_eq::constant_time_eq;
-use quick_xml::events::Event;
-use quick_xml::Reader;
+use quick_xml::events::{BytesStart, Event};
+use quick_xml::{Reader, XmlVersion};
 use ring::digest;
 use ring::signature::{self, UnparsedPublicKey};
 use sha1::{Digest as _, Sha1};
@@ -261,6 +261,30 @@ fn contains_forbidden_dtd(xml: &str) -> bool {
     upper.contains("<!DOCTYPE") || upper.contains("<!ENTITY")
 }
 
+fn parse_elem_attrs(e: &BytesStart<'_>) -> Result<Vec<(String, String)>, String> {
+    let mut attrs = Vec::new();
+    for attr in e.attributes() {
+        let attr = attr.map_err(|err| format!("XML attribute parse error: {err}"))?;
+        let key = attr.key.into_inner().to_owned();
+        let val = attr
+            .normalized_value(XmlVersion::Implicit1_0)
+            .map_err(|err| format!("XML attribute unescape error: {err}"))?
+            .into_owned();
+        attrs.push((key, val));
+    }
+    Ok(attrs)
+}
+
+fn push_xml_text(stack: &mut [XmlElem], chunk: &str) {
+    if let Some(parent) = stack.last_mut() {
+        if let Some(XmlChild::Text(existing)) = parent.children.last_mut() {
+            existing.push_str(chunk);
+        } else {
+            parent.children.push(XmlChild::Text(chunk.to_owned()));
+        }
+    }
+}
+
 pub fn parse_xml_dom(xml: &str) -> Result<XmlElem, String> {
     if contains_forbidden_dtd(xml) {
         return Err("XML DTD/ENTITY declarations are forbidden (XXE protection)".into());
@@ -275,17 +299,8 @@ pub fn parse_xml_dom(xml: &str) -> Result<XmlElem, String> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(e)) => {
-                let qname = String::from_utf8_lossy(e.name().as_ref()).into_owned();
-                let mut attrs = Vec::new();
-                for attr in e.attributes() {
-                    let attr = attr.map_err(|err| format!("XML attribute parse error: {err}"))?;
-                    let key = String::from_utf8_lossy(attr.key.as_ref()).into_owned();
-                    let val = attr
-                        .decode_and_unescape_value(reader.decoder())
-                        .map_err(|err| format!("XML attribute unescape error: {err}"))?
-                        .into_owned();
-                    attrs.push((key, val));
-                }
+                let qname = e.name().into_inner().to_owned();
+                let attrs = parse_elem_attrs(&e)?;
                 let uid = next_uid;
                 next_uid += 1;
                 stack.push(XmlElem {
@@ -296,17 +311,8 @@ pub fn parse_xml_dom(xml: &str) -> Result<XmlElem, String> {
                 });
             }
             Ok(Event::Empty(e)) => {
-                let qname = String::from_utf8_lossy(e.name().as_ref()).into_owned();
-                let mut attrs = Vec::new();
-                for attr in e.attributes() {
-                    let attr = attr.map_err(|err| format!("XML attribute parse error: {err}"))?;
-                    let key = String::from_utf8_lossy(attr.key.as_ref()).into_owned();
-                    let val = attr
-                        .decode_and_unescape_value(reader.decoder())
-                        .map_err(|err| format!("XML attribute unescape error: {err}"))?
-                        .into_owned();
-                    attrs.push((key, val));
-                }
+                let qname = e.name().into_inner().to_owned();
+                let attrs = parse_elem_attrs(&e)?;
                 let uid = next_uid;
                 next_uid += 1;
                 let elem = XmlElem {
@@ -324,28 +330,35 @@ pub fn parse_xml_dom(xml: &str) -> Result<XmlElem, String> {
                 }
             }
             Ok(Event::Text(t)) => {
-                let txt = t
-                    .unescape()
-                    .map_err(|err| format!("XML text unescape error: {err}"))?
-                    .into_owned();
-                if let Some(parent) = stack.last_mut() {
-                    parent.children.push(XmlChild::Text(txt));
+                push_xml_text(&mut stack, t.xml10_content().as_ref());
+            }
+            Ok(Event::GeneralRef(r)) => {
+                if let Some(ch) = r
+                    .resolve_char_ref()
+                    .map_err(|err| format!("XML char ref error: {err}"))?
+                {
+                    let mut buf = [0u8; 4];
+                    push_xml_text(&mut stack, ch.encode_utf8(&mut buf));
+                } else if let Some(s) = quick_xml::escape::resolve_predefined_entity(r.as_ref()) {
+                    push_xml_text(&mut stack, s);
+                } else {
+                    return Err(format!(
+                        "unsupported XML entity reference: &{};",
+                        r.as_ref()
+                    ));
                 }
             }
             Ok(Event::CData(c)) => {
-                let txt = String::from_utf8_lossy(c.as_ref()).into_owned();
-                if let Some(parent) = stack.last_mut() {
-                    parent.children.push(XmlChild::Text(txt));
-                }
+                push_xml_text(&mut stack, c.xml10_content().as_ref());
             }
             Ok(Event::Comment(c)) => {
-                let txt = String::from_utf8_lossy(c.as_ref()).into_owned();
+                let txt = c.xml10_content().into_owned();
                 if let Some(parent) = stack.last_mut() {
                     parent.children.push(XmlChild::Comment(txt));
                 }
             }
             Ok(Event::End(e)) => {
-                let end_qname = String::from_utf8_lossy(e.name().as_ref()).into_owned();
+                let end_qname = e.name().into_inner();
                 let Some(elem) = stack.pop() else {
                     return Err("unexpected closing XML tag".into());
                 };
