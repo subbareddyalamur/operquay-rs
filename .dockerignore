@@ -6,4 +6,9 @@ frontend/test-results/
 .beads/
 .serena/
 .cocoindex_code/
+.agents/
+.claude/
+.codex/
+.cursor/
+archive/
 

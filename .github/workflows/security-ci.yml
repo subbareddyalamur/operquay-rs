@@ -105,9 +105,172 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
 
+  vulnerability-scan:
+    name: Vulnerability & IaC Scanning (Trivy + govulncheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy Repo Vulnerability & Secret Scan (Table Summary)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          scanners: 'vuln,secret'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          skip-dirs: 'target,frontend/node_modules,frontend/dist,archive,.git'
+          format: 'table'
+          exit-code: '0'
+
+      - name: Trivy Repo Vulnerability & Secret Gate (SARIF)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          scanners: 'vuln,secret'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          skip-dirs: 'target,frontend/node_modules,frontend/dist,archive,.git'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+          limit-severities-for-sarif: true
+          exit-code: '1'
+
+      - name: Upload Trivy Filesystem SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-fs-results.sarif') != ''
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+          category: 'trivy-fs'
+
+      - name: Trivy IaC & Dockerfile Misconfiguration Scan (Table Summary)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          skip-dirs: 'target,frontend/node_modules,frontend/dist,archive,.git'
+          format: 'table'
+          exit-code: '0'
+
+      - name: Trivy IaC & Dockerfile Misconfiguration Gate (SARIF)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          skip-dirs: 'target,frontend/node_modules,frontend/dist,archive,.git'
+          format: 'sarif'
+          output: 'trivy-config-results.sarif'
+          limit-severities-for-sarif: true
+          exit-code: '1'
+
+      - name: Upload Trivy IaC SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-config-results.sarif') != ''
+        with:
+          sarif_file: 'trivy-config-results.sarif'
+          category: 'trivy-config'
+
+      - name: Upload Trivy Repo Scan Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-repo-scan-reports
+          path: trivy-*.sarif
+          if-no-files-found: ignore
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Run govulncheck (terraform-provider-operquay)
+        working-directory: terraform-provider-operquay
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+  docker-trivy-scan:
+    name: Docker Build & Trivy Image Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build Operquay Production Docker Image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: operquay-rust:${{ github.sha }}
+          build-args: CARGO_BUILD_JOBS=4
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Trivy Docker Image Scan (Table Summary)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'image'
+          image-ref: 'operquay-rust:${{ github.sha }}'
+          scanners: 'vuln,secret'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          format: 'table'
+          exit-code: '0'
+
+      - name: Trivy Docker Image Vulnerability Gate (SARIF)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'image'
+          image-ref: 'operquay-rust:${{ github.sha }}'
+          scanners: 'vuln,secret'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-image-results.sarif'
+          limit-severities-for-sarif: true
+          exit-code: '1'
+
+      - name: Upload Docker Image Trivy SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-image-results.sarif') != ''
+        with:
+          sarif_file: 'trivy-image-results.sarif'
+          category: 'trivy-docker-image'
+
+      - name: Trivy Compose PostgreSQL Image Advisory Scan (Non-blocking)
+        if: always()
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'image'
+          image-ref: 'postgres:16-alpine'
+          scanners: 'vuln'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-postgres-image.sarif'
+          limit-severities-for-sarif: true
+          exit-code: '0'
+
+      - name: Upload Compose PostgreSQL SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-postgres-image.sarif') != ''
+        with:
+          sarif_file: 'trivy-postgres-image.sarif'
+          category: 'trivy-compose-postgres'
+
+      - name: Upload Trivy Docker Scan Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-docker-scan-reports
+          path: trivy-*.sarif
+          if-no-files-found: ignore
+
   sbom-and-sign:
     name: CycloneDX SBOM & Sigstore Cosign Attestation
-    needs: [rust-gates, frontend-gates, supply-chain-audit]
+    needs: [rust-gates, frontend-gates, supply-chain-audit, vulnerability-scan, docker-trivy-scan]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -28,7 +28,6 @@ playwright/.cache/
 /.codex/
 /.cursor/
 /.serena/
-/.cargo/
 
 # Tool caches
 /.cocoindex_code/cocoindex.db/

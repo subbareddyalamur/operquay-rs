@@ -1,0 +1,20 @@
+# Unfixable transitive advisories pinned upstream by ironrdp-connector 0.12.0 -> sspi 0.23.0.
+[advisories]
+ignore = [
+    # rsa 0.10.0-rc.18 exact-pinned (=0.10.0-rc.18) by sspi/picky; operquay-rdp is an RDP client, not an RSA decryption oracle.
+    "RUSTSEC-2023-0071",
+    # atomic-polyfill 1.0.3 via heapless 0.7.17 (ironrdp-connector -> sspi/scard -> winscard -> iso7816); unused on targets with native atomics.
+    "RUSTSEC-2023-0089",
+    # pin-utils 0.1.1 (unmaintained) via sspi -> async-dnssd 0.5.1 (macOS/iOS target only).
+    "RUSTSEC-2026-0441",
+    # heapless 0.7.17 via ironrdp-connector -> sspi/scard -> winscard 0.4 -> iso7816 0.1 (smartcard redirection unused; winscard pins iso7816 ^0.1).
+    "RUSTSEC-2026-0574",
+    "RUSTSEC-2026-0575",
+    "RUSTSEC-2026-0576",
+    "RUSTSEC-2026-0577",
+    "RUSTSEC-2026-0578",
+    "RUSTSEC-2026-0579",
+    "RUSTSEC-2026-0580",
+    "RUSTSEC-2026-0581",
+    "RUSTSEC-2026-0582",
+]

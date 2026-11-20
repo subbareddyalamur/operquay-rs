@@ -13,7 +13,8 @@ RUN corepack enable && corepack prepare pnpm@10.33.0 --activate && \
 
 FROM rust:bookworm AS rust-builder
 WORKDIR /build
-ENV CARGO_BUILD_JOBS=1 \
+ARG CARGO_BUILD_JOBS=1
+ENV CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS} \
     CARGO_PROFILE_RELEASE_LTO=false
 RUN rustup target add wasm32-unknown-unknown
 COPY Cargo.toml Cargo.lock* ./
@@ -29,6 +30,7 @@ RUN if [ ! -f ./frontend/dist/operquay_term.wasm ]; then \
 
 FROM debian:bookworm-slim AS runtime
 RUN apt-get update && \
+    apt-get upgrade -y --no-install-recommends && \
     apt-get install -y --no-install-recommends zlib1g ca-certificates curl && \
     rm -rf /var/lib/apt/lists/* && \
     groupadd -g 65532 nonroot && \
@@ -42,5 +44,8 @@ COPY --from=rust-builder --chown=nonroot:nonroot /build/migrations /app/migratio
 ENV OPERQUAY_LISTEN=0.0.0.0:8080
 EXPOSE 8080
 USER nonroot:nonroot
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:8080/health || exit 1
 
 ENTRYPOINT ["/app/operquay"]
