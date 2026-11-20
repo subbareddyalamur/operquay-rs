@@ -22,13 +22,17 @@ playwright/.cache/
 *.mp4
 /deploy/certs/
 
-# Tool caches (keep project configs, ignore ephemeral caches/db binaries where appropriate)
-/.serena/cache/
+# AI / Agent tools
+/.agents/
+/.beads/
+/.claude/
+/.codex/
+/.cursor/
+/.serena/
+
+# Tool caches
 /.cocoindex_code/cocoindex.db/
 /.cocoindex_code/target_sqlite.db
-/.beads/embeddeddolt/
-/.beads/*.lock
-/.beads/last-touched
 
 # OS
 .DS_Store
