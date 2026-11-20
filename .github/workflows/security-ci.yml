@@ -184,6 +184,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: 'stable'
+          cache: false
 
       - name: Run govulncheck (terraform-provider-operquay)
         working-directory: terraform-provider-operquay
